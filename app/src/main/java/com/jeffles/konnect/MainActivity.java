@@ -1,16 +1,20 @@
 package com.jeffles.konnect;
 
+
 import android.Manifest;
+import android.content.Context;
 import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
-import android.widget.EditText;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.bridgefy.sdk.client.Bridgefy;
 import com.bridgefy.sdk.client.BridgefyClient;
@@ -20,12 +24,25 @@ import com.bridgefy.sdk.client.MessageListener;
 import com.bridgefy.sdk.client.RegistrationListener;
 import com.bridgefy.sdk.client.Session;
 import com.bridgefy.sdk.client.StateListener;
-import com.bridgefy.sdk.framework.exceptions.MessageException;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 
 import java.util.HashMap;
 
+import static com.jeffles.konnect.DateHandler.getTime;
+import static com.jeffles.konnect.NewsHandler.searchNews;
+
 public class MainActivity extends AppCompatActivity {
-    final static String TAG = "MainActivity";
+    private final static String TAG = "MainActivity";
+    private final static String searchTerm = "world news";
+
+    RecyclerView newsView;
+    NewsAdapter newsAdapter;
+
+    NewsWrapper newsWrapper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,7 +63,14 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        findViewById(R.id.sendButton).setOnClickListener((View v) -> sendMessage());
+        if (hasConnection()) {
+            try {
+                new TimeTask().execute();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        }
     }
 
     MessageListener messageListener = new MessageListener() {
@@ -57,21 +81,20 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onBroadcastMessageReceived(Message message) {
-            HashMap<String, Object> content = message.getContent();
-
             Log.d(TAG, "Received data");
 
-            ((TextView) findViewById(R.id.broadcastedMessage)).setText(String.valueOf(content.get("message")));
-        }
+            HashMap<String, Object> content = message.getContent();
 
-        @Override
-        public void onMessageFailed(Message message, MessageException e) {
-            Log.e(TAG, e.toString());
-        }
+            Gson gson = new GsonBuilder()
+                    .registerTypeAdapter(NewsWrapper.class, new NewsWrapperDeserializer())
+                    .create();
 
-        @Override
-        public void onMessageReceivedException(java.lang.String sender, MessageException e) {
-            Log.e(TAG, e.toString());
+            newsWrapper = gson.fromJson((String) content.get("news"), NewsWrapper.class);
+
+            newsView = findViewById(R.id.newsView);
+            newsAdapter = new NewsAdapter(newsWrapper.getNewsItems());
+
+            newsView.setAdapter(newsAdapter);
         }
     };
 
@@ -120,11 +143,83 @@ public class MainActivity extends AppCompatActivity {
     private void sendMessage() {
         HashMap<String, Object> data = new HashMap<>();
 
-        EditText text = findViewById(R.id.editText);
+        Gson gson = new GsonBuilder()
+                .registerTypeAdapter(NewsWrapper.class, new NewsWrapperSerializer())
+                .create();
 
-        data.put("message", text.getText().toString());
+        data.put("news", gson.toJson(newsWrapper));
 
         Bridgefy.sendBroadcastMessage(data);
-        Log.d(TAG, "Data sent " + text.getText());
+    }
+
+    private boolean hasConnection() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (connectivityManager == null) {
+            return false;
+        }
+
+        Network network = connectivityManager.getActiveNetwork();
+        NetworkCapabilities capabilities = connectivityManager.getNetworkCapabilities(network);
+        if (capabilities == null) {
+            return false;
+        }
+        return capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI);
+    }
+
+    private class TimeTask extends AsyncTask<String, String, String> {
+        protected String doInBackground(String... urls) {
+            try {
+                newsWrapper = new NewsWrapper(getTime());
+
+            } catch (Exception e) {
+                Log.e(TAG, e.toString());
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            new NewsListTask().execute();
+        }
+    }
+
+    private class NewsListTask extends AsyncTask<String, String, String> {
+        protected String doInBackground(String... urls) {
+            try {
+                JsonObject result = searchNews(searchTerm);
+                JsonArray newsArray = result.get("value").getAsJsonArray();
+
+                for (JsonElement news : newsArray) {
+                    JsonObject newsObject = news.getAsJsonObject();
+
+                    JsonArray providerArray = newsObject.get("provider").getAsJsonArray();
+                    JsonObject providerObject = providerArray.get(0).getAsJsonObject();
+
+                    String provider = providerObject.get("name").getAsString();
+                    String date = newsObject.get("datePublished").getAsString();
+                    String headline = newsObject.get("name").getAsString();
+                    String url = newsObject.get("url").getAsString();
+                    String article = newsObject.get("description").getAsString();
+
+                    newsWrapper.addNewsItem(new NewsItem(provider, date, headline, url, article));
+                }
+
+            } catch (Exception e) {
+                Log.e(TAG, e.toString());
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            newsView = findViewById(R.id.newsView);
+            newsAdapter = new NewsAdapter(newsWrapper.getNewsItems());
+
+            newsView.setAdapter(newsAdapter);
+
+            sendMessage();
+        }
     }
 }
