@@ -3,14 +3,15 @@ package com.jeffles.konnect;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -42,12 +43,11 @@ public class MainActivity extends AppCompatActivity {
 
     private final static String searchTerm = "world news";
 
-    private static RecyclerView newsView;
+    private SwipeRefreshLayout swipeContainer;
+    private RecyclerView newsView;
     private NewsAdapter newsAdapter;
 
     private NewsWrapper newsWrapper;
-
-    private SwipeRefreshLayout swipeContainer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -222,6 +222,14 @@ public class MainActivity extends AppCompatActivity {
             newsAdapter = new NewsAdapter(newsWrapper.getNewsItems());
 
             newsView.setAdapter(newsAdapter);
+
+            newsAdapter.setOnItemClickListener(position -> {
+                Uri webpage = Uri.parse(newsWrapper.getNewsItems().get(position).getUrl());
+                Intent intent = new Intent(Intent.ACTION_VIEW, webpage);
+                if (intent.resolveActivity(getPackageManager()) != null) {
+                    startActivity(intent);
+                }
+            });
 
             broadcastNews();
             swipeContainer.setRefreshing(false);

@@ -1,10 +1,7 @@
 package com.jeffles.konnect;
 
-import android.util.Log;
-
 import org.joda.time.DateTime;
 
-import java.net.MalformedURLException;
 import java.net.URL;
 
 public class NewsItem {
@@ -13,22 +10,14 @@ public class NewsItem {
     private String articleProvider;
     private DateTime datePublished;
     private String headline;
-    private URL url;
+    private String url;
     private String article;
 
     public NewsItem(String articleProvider, String datePublished, String headline, String url, String article) {
         this.articleProvider = articleProvider;
-
         this.datePublished = new DateTime(datePublished);
-
         this.headline = headline;
-
-        try {
-            this.url = new URL(url);
-        } catch (MalformedURLException e) {
-            Log.e(TAG, "NewsItem MalformedURL", e);
-        }
-
+        this.url = url;
         this.article = article;
     }
 
@@ -44,7 +33,7 @@ public class NewsItem {
         return headline;
     }
 
-    public URL getUrl() {
+    public String getUrl() {
         return url;
     }
 
