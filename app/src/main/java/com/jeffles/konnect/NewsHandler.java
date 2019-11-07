@@ -1,9 +1,5 @@
 package com.jeffles.konnect;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -13,8 +9,6 @@ import java.net.URLEncoder;
 import java.util.Scanner;
 
 import javax.net.ssl.HttpsURLConnection;
-
-import static com.jeffles.konnect.DateHandler.getTime;
 
 public class NewsHandler {
     private static final String TAG = "NewsHandler";
@@ -37,39 +31,5 @@ public class NewsHandler {
 
         JsonParser parser = new JsonParser();
         return parser.parse(response).getAsJsonObject();
-    }
-
-    public static void main(String[] args) {
-        try {
-            NewsWrapper newsWrapper = new NewsWrapper(getTime());
-
-            JsonObject result = searchNews("world news");
-            JsonArray newsArray = result.get("value").getAsJsonArray();
-
-            for (JsonElement news : newsArray) {
-                JsonObject newsObject = news.getAsJsonObject();
-
-                JsonArray providerArray = newsObject.get("provider").getAsJsonArray();
-                JsonObject providerObject = providerArray.get(0).getAsJsonObject();
-
-                String provider = providerObject.get("name").getAsString();
-                String date = newsObject.get("datePublished").getAsString();
-                String headline = newsObject.get("name").getAsString();
-                String url = newsObject.get("url").getAsString();
-                String article = newsObject.get("description").getAsString();
-
-                NewsItem item = new NewsItem(provider, date, headline, url, article);
-                newsWrapper.addNewsItem(item);
-            }
-
-            Gson gson = new GsonBuilder()
-                    .registerTypeAdapter(NewsWrapper.class, new NewsWrapperSerializer())
-                    .setPrettyPrinting()
-                    .create();
-            System.out.println(gson.toJson(newsWrapper));
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 }

@@ -14,11 +14,6 @@ public class NewsWrapper {
         this.newsItems = new ArrayList<>();
     }
 
-    public NewsWrapper(DateTime timeStamp, List<NewsItem> newsItems) {
-        this.timeStamp = timeStamp;
-        this.newsItems = newsItems;
-    }
-
     public DateTime getTimeStamp() {
         return timeStamp;
     }

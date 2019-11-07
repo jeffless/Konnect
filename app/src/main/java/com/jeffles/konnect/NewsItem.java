@@ -1,5 +1,7 @@
 package com.jeffles.konnect;
 
+import android.util.Log;
+
 import org.joda.time.DateTime;
 
 import java.net.MalformedURLException;
@@ -24,7 +26,7 @@ public class NewsItem {
         try {
             this.url = new URL(url);
         } catch (MalformedURLException e) {
-            e.printStackTrace();
+            Log.e(TAG, "NewsItem MalformedURL", e);
         }
 
         this.article = article;

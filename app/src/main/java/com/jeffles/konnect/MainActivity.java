@@ -10,11 +10,13 @@ import android.net.NetworkCapabilities;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.bridgefy.sdk.client.Bridgefy;
 import com.bridgefy.sdk.client.BridgefyClient;
@@ -37,23 +39,32 @@ import static com.jeffles.konnect.NewsHandler.searchNews;
 
 public class MainActivity extends AppCompatActivity {
     private final static String TAG = "MainActivity";
+
     private final static String searchTerm = "world news";
 
-    RecyclerView newsView;
-    NewsAdapter newsAdapter;
+    private static RecyclerView newsView;
+    private NewsAdapter newsAdapter;
 
-    NewsWrapper newsWrapper;
+    private NewsWrapper newsWrapper;
+
+    private SwipeRefreshLayout swipeContainer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        swipeContainer = findViewById(R.id.swipeContainer);
+        swipeContainer.setOnRefreshListener(() -> {
+            if (hasConnection()) {
+                new TimeTask().execute();
+            }
+        });
+
         Bridgefy.initialize(getApplicationContext(), "60771531-18ed-4bc8-bac1-df3908df319c", new RegistrationListener() {
             @Override
             public void onRegistrationSuccessful(BridgefyClient bridgefyClient) {
-                // Once the registration process has been successful, we can start operations
-                Log.e(TAG, "Successful Registration");
+                Log.i(TAG, "Successful Registration");
                 Bridgefy.start(messageListener, stateListener);
             }
 
@@ -64,24 +75,14 @@ public class MainActivity extends AppCompatActivity {
         });
 
         if (hasConnection()) {
-            try {
-                new TimeTask().execute();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
+            new TimeTask().execute();
         }
     }
 
     MessageListener messageListener = new MessageListener() {
         @Override
-        public void onMessageSent(String messageId) {
-            Log.i(TAG, "message sent");
-        }
-
-        @Override
         public void onBroadcastMessageReceived(Message message) {
-            Log.d(TAG, "Received data");
+            Log.i(TAG, "Received data");
 
             HashMap<String, Object> content = message.getContent();
 
@@ -89,12 +90,17 @@ public class MainActivity extends AppCompatActivity {
                     .registerTypeAdapter(NewsWrapper.class, new NewsWrapperDeserializer())
                     .create();
 
-            newsWrapper = gson.fromJson((String) content.get("news"), NewsWrapper.class);
+            NewsWrapper receivedWrapper = gson.fromJson((String) content.get("news"), NewsWrapper.class);
 
-            newsView = findViewById(R.id.newsView);
-            newsAdapter = new NewsAdapter(newsWrapper.getNewsItems());
+            if (receivedWrapper.getTimeStamp().isAfter(newsWrapper.getTimeStamp())) {
+                newsWrapper = receivedWrapper;
+                newsView = findViewById(R.id.newsView);
+                newsAdapter = new NewsAdapter(newsWrapper.getNewsItems());
 
-            newsView.setAdapter(newsAdapter);
+                newsView.setAdapter(newsAdapter);
+            } else {
+                broadcastNews();
+            }
         }
     };
 
@@ -111,7 +117,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onDeviceLost(Device device) {
-            Log.w(TAG, "onDeviceLost: " + device.getUserId());
+            Log.i(TAG, "onDeviceLost: " + device.getUserId());
         }
 
         @Override
@@ -140,7 +146,7 @@ public class MainActivity extends AppCompatActivity {
         Bridgefy.stop();
     }
 
-    private void sendMessage() {
+    private void broadcastNews() {
         HashMap<String, Object> data = new HashMap<>();
 
         Gson gson = new GsonBuilder()
@@ -172,7 +178,7 @@ public class MainActivity extends AppCompatActivity {
                 newsWrapper = new NewsWrapper(getTime());
 
             } catch (Exception e) {
-                Log.e(TAG, e.toString());
+                Log.e(TAG, "Get Time Error", e);
             }
 
             return null;
@@ -196,17 +202,15 @@ public class MainActivity extends AppCompatActivity {
                     JsonArray providerArray = newsObject.get("provider").getAsJsonArray();
                     JsonObject providerObject = providerArray.get(0).getAsJsonObject();
 
-                    String provider = providerObject.get("name").getAsString();
-                    String date = newsObject.get("datePublished").getAsString();
-                    String headline = newsObject.get("name").getAsString();
-                    String url = newsObject.get("url").getAsString();
-                    String article = newsObject.get("description").getAsString();
-
-                    newsWrapper.addNewsItem(new NewsItem(provider, date, headline, url, article));
+                    newsWrapper.addNewsItem(new NewsItem(providerObject.get("name").getAsString(),
+                            newsObject.get("datePublished").getAsString(),
+                            newsObject.get("name").getAsString(),
+                            newsObject.get("url").getAsString(),
+                            newsObject.get("description").getAsString()));
                 }
 
             } catch (Exception e) {
-                Log.e(TAG, e.toString());
+                Log.e(TAG, "Search News Error", e);
             }
 
             return null;
@@ -219,7 +223,8 @@ public class MainActivity extends AppCompatActivity {
 
             newsView.setAdapter(newsAdapter);
 
-            sendMessage();
+            broadcastNews();
+            swipeContainer.setRefreshing(false);
         }
     }
 }
