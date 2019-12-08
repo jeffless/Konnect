@@ -2,8 +2,6 @@ package com.jeffles.konnect;
 
 import org.joda.time.DateTime;
 
-import java.net.URL;
-
 public class NewsItem {
     private static final String TAG = "NewsItem";
 

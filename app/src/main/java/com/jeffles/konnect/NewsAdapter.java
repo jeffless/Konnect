@@ -13,7 +13,6 @@ import org.joda.time.format.DateTimeFormat;
 import java.util.List;
 
 public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.ViewHolder> {
-
     private List<NewsItem> newsList;
     private OnItemClickListener mListener;
 

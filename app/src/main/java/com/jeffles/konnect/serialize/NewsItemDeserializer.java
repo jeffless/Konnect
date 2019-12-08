@@ -1,10 +1,11 @@
-package com.jeffles.konnect;
+package com.jeffles.konnect.serialize;
 
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.jeffles.konnect.NewsItem;
 
 import java.lang.reflect.Type;
 

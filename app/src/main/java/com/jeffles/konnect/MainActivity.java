@@ -32,11 +32,13 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.jeffles.konnect.serialize.NewsWrapperDeserializer;
+import com.jeffles.konnect.serialize.NewsWrapperSerializer;
 
 import java.util.HashMap;
 
-import static com.jeffles.konnect.DateHandler.getTime;
-import static com.jeffles.konnect.NewsHandler.searchNews;
+import static com.jeffles.konnect.handler.DateHandler.getTime;
+import static com.jeffles.konnect.handler.NewsHandler.searchNews;
 
 public class MainActivity extends AppCompatActivity {
     private final static String TAG = "MainActivity";
@@ -92,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
 
             NewsWrapper receivedWrapper = gson.fromJson((String) content.get("news"), NewsWrapper.class);
 
-            if (receivedWrapper.getTimeStamp().isAfter(newsWrapper.getTimeStamp())) {
+            if (newsWrapper == null || receivedWrapper.getTimeStamp().isAfter(newsWrapper.getTimeStamp())) {
                 newsWrapper = receivedWrapper;
                 newsView = findViewById(R.id.newsView);
                 newsAdapter = new NewsAdapter(newsWrapper.getNewsItems());

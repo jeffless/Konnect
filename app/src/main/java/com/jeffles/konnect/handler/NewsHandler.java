@@ -1,4 +1,4 @@
-package com.jeffles.konnect;
+package com.jeffles.konnect.handler;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -13,9 +13,9 @@ import javax.net.ssl.HttpsURLConnection;
 public class NewsHandler {
     private static final String TAG = "NewsHandler";
 
-    private static final String subscriptionKey = "12e5ab397fc043c5a6bad8fc16967cc5";
+    private static final String subscriptionKey = "098d46ad537a4cc9835a79f71721dfc4";
 
-    private static final String host = "https://eastus.api.cognitive.microsoft.com/";
+    private static final String host = "https://centralus.api.cognitive.microsoft.com/";
     private static final String path = "/bing/v7.0/news/search";
 
     public static JsonObject searchNews(String searchQuery) throws Exception {

@@ -1,4 +1,4 @@
-package com.jeffles.konnect;
+package com.jeffles.konnect.serialize;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -7,10 +7,12 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
+import com.jeffles.konnect.NewsItem;
+import com.jeffles.konnect.NewsWrapper;
 
 import java.lang.reflect.Type;
 
-public class NewsWrapperSerializer implements JsonSerializer<NewsWrapper>{
+public class NewsWrapperSerializer implements JsonSerializer<NewsWrapper> {
     @Override
     public JsonElement serialize(NewsWrapper src, Type typeOfSrc, JsonSerializationContext context) {
         JsonObject obj = new JsonObject();
