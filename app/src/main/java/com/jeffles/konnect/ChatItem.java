@@ -1,7 +1,5 @@
 package com.jeffles.konnect;
 
-import com.google.gson.annotations.SerializedName;
-
 import org.joda.time.DateTime;
 
 public class ChatItem {
@@ -9,22 +7,14 @@ public class ChatItem {
 
     private String sender;
     private DateTime timeStamp;
-    private Priority priority;
+    private boolean isSOS;
     private String message;
     private boolean isMyMessage;
 
-    public enum Priority {
-        @SerializedName("high")
-        HIGH,
-
-        @SerializedName("low")
-        LOW
-    }
-
-    public ChatItem(String sender, DateTime timeStamp, Priority priority, String message) {
+    public ChatItem(String sender, DateTime timeStamp, boolean isSOS, String message) {
         this.sender = sender;
         this.timeStamp = timeStamp;
-        this.priority = priority;
+        this.isSOS = isSOS;
         this.message = message;
 
         isMyMessage = true;
@@ -38,8 +28,8 @@ public class ChatItem {
         return timeStamp;
     }
 
-    public Priority getPriority() {
-        return priority;
+    public boolean isSOS() {
+        return isSOS;
     }
 
     public String getMessage() {

@@ -1,18 +1,16 @@
 package com.jeffles.konnect;
 
 import android.Manifest;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.os.Build;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -44,8 +42,6 @@ public class ChatActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
 
-        createNotificationChannel();
-
         Bridgefy.initialize(getApplicationContext(), "60771531-18ed-4bc8-bac1-df3908df319c", new RegistrationListener() {
             @Override
             public void onRegistrationSuccessful(BridgefyClient bridgefyClient) {
@@ -62,12 +58,32 @@ public class ChatActivity extends AppCompatActivity {
         findViewById(R.id.sendMessage).setOnClickListener((View v) -> sendMessage());
         findViewById(R.id.sendSOS).setOnClickListener((View v) -> sendSOS());
 
-        chatAdapter = new ChatAdapter(new ArrayList<ChatItem>());
+        chatAdapter = new ChatAdapter(new ArrayList<>());
         RecyclerView messagesView = findViewById(R.id.messages_view);
         LinearLayoutManager mLinearLayoutManager = new LinearLayoutManager(this);
         mLinearLayoutManager.setReverseLayout(true);
         messagesView.setLayoutManager(mLinearLayoutManager);
         messagesView.setAdapter(chatAdapter);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_items, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                finish();
+                return true;
+            case R.id.openNews:
+                startActivity(new Intent(this, MainActivity.class));
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     MessageListener messageListener = new MessageListener() {
@@ -84,18 +100,6 @@ public class ChatActivity extends AppCompatActivity {
             ChatItem receivedChat = gson.fromJson((String) content.get("chat"), ChatItem.class);
             receivedChat.setMyMessage(false);
             chatAdapter.addMessage(receivedChat);
-
-            if (receivedChat.getPriority() == ChatItem.Priority.HIGH) {
-                NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext(), "konnect")
-                        .setSmallIcon(R.drawable.ic_sos_black_24dp)
-                        .setContentTitle("Konnect")
-                        .setContentText(receivedChat.getMessage())
-                        .setPriority(NotificationCompat.PRIORITY_DEFAULT);
-
-
-                NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getApplicationContext());
-                notificationManager.notify(0, builder.build());
-            }
         }
     };
 
@@ -127,14 +131,14 @@ public class ChatActivity extends AppCompatActivity {
     };
 
     private void sendMessage() {
-        broadcastMessage(ChatItem.Priority.LOW);
+        broadcastMessage(false);
     }
 
     private void sendSOS() {
-        broadcastMessage(ChatItem.Priority.HIGH);
+        broadcastMessage(true);
     }
 
-    private void broadcastMessage(ChatItem.Priority priority) {
+    private void broadcastMessage(boolean isSOS) {
         EditText messageBox = findViewById(R.id.editText);
         String message = messageBox.getText().toString().trim();
         if (message.length() == 0) {
@@ -147,27 +151,11 @@ public class ChatActivity extends AppCompatActivity {
                 .registerTypeAdapter(ChatItem.class, new ChatItemSerializer())
                 .create();
 
-        ChatItem item = new ChatItem("Don Joe", DateTime.now(), priority, message);
+        ChatItem item = new ChatItem("Don Joe", DateTime.now(), isSOS, message);
         data.put("chat", gson.toJson(item));
         chatAdapter.addMessage(item);
 
         Bridgefy.sendBroadcastMessage(data);
         messageBox.setText("");
-    }
-
-    private void createNotificationChannel() {
-        // Create the NotificationChannel, but only on API 26+ because
-        // the NotificationChannel class is new and not in the support library
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            CharSequence name = "Konnect";
-            String description = "Mesh Library";
-            int importance = NotificationManager.IMPORTANCE_DEFAULT;
-            NotificationChannel channel = new NotificationChannel("konnect", name, importance);
-            channel.setDescription(description);
-            // Register the channel with the system; you can't change the importance
-            // or other notification behaviors after this
-            NotificationManager notificationManager = getSystemService(NotificationManager.class);
-            notificationManager.createNotificationChannel(channel);
-        }
     }
 }

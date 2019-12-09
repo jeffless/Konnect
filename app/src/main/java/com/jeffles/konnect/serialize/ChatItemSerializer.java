@@ -1,6 +1,5 @@
 package com.jeffles.konnect.serialize;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSerializationContext;
@@ -16,7 +15,7 @@ public class ChatItemSerializer implements JsonSerializer<ChatItem> {
 
         obj.addProperty("sender", src.getSender());
         obj.addProperty("timeStamp", src.getTimeStamp().toString());
-        obj.addProperty("priority", new Gson().toJson(src.getPriority()));
+        obj.addProperty("priority", src.isSOS());
         obj.addProperty("message", src.getMessage());
         return obj;
     }

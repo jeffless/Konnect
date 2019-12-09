@@ -11,6 +11,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 
 public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
+    private static final int MY_SOS = 0;
+    private static final int THEIR_SOS = 1;
+    private static final int MY_MESSAGE = 2;
+    private static final int THEIR_MESSAGE = 3;
+
     private final List<ChatItem> chatItems;
 
     public ChatAdapter(List<ChatItem> chatItems) {
@@ -20,15 +25,25 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View messageView;
+        View messageView = null;
 
-        if (viewType == 0) {
-            messageView = LayoutInflater.from(parent.getContext()).
-                    inflate((R.layout.their_message), parent, false);
-        } else {
-
-            messageView = LayoutInflater.from(parent.getContext()).
-                    inflate((R.layout.my_message), parent, false);
+        switch (viewType) {
+            case MY_SOS:
+                messageView = LayoutInflater.from(parent.getContext()).
+                        inflate((R.layout.my_sos), parent, false);
+                break;
+            case THEIR_SOS:
+                messageView = LayoutInflater.from(parent.getContext()).
+                        inflate((R.layout.their_sos), parent, false);
+                break;
+            case MY_MESSAGE:
+                messageView = LayoutInflater.from(parent.getContext()).
+                        inflate((R.layout.my_message), parent, false);
+                break;
+            case THEIR_MESSAGE:
+                messageView = LayoutInflater.from(parent.getContext()).
+                        inflate((R.layout.their_message), parent, false);
+                break;
         }
 
         return new ViewHolder(messageView);
@@ -41,7 +56,20 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
 
     @Override
     public int getItemViewType(int position) {
-        return chatItems.get(position).isMyMessage() ? 1 : 0;
+        ChatItem current = chatItems.get(position);
+        if (current.isSOS()) {
+            if (current.isMyMessage()) {
+                return MY_SOS;
+            } else {
+                return THEIR_SOS;
+            }
+        } else {
+            if (current.isMyMessage()) {
+                return MY_MESSAGE;
+            } else {
+                return THEIR_MESSAGE;
+            }
+        }
     }
 
     @Override
@@ -59,7 +87,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
         TextView message;
         ChatItem chatItem;
 
-        ViewHolder(@NonNull View view) {
+        ViewHolder(View view) {
             super(view);
 
             message = view.findViewById(R.id.message_body);

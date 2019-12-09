@@ -1,6 +1,5 @@
 package com.jeffles.konnect.serialize;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
@@ -19,8 +18,7 @@ public class ChatItemDeserializer implements JsonDeserializer<ChatItem> {
 
         DateTime timeStamp = new DateTime(input.get("timeStamp").getAsString());
 
-        return new ChatItem(input.get("sender").getAsString(), timeStamp,
-                new Gson().fromJson(input.get("priority"), ChatItem.Priority.class),
+        return new ChatItem(input.get("sender").getAsString(), timeStamp, input.get("priority").getAsBoolean(),
                 input.get("message").getAsString());
     }
 }
