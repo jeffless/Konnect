@@ -67,6 +67,12 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Bridgefy.stop();
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_items, menu);
@@ -75,15 +81,11 @@ public class ChatActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case android.R.id.home:
-                finish();
-                return true;
-            case R.id.openNews:
-                startActivity(new Intent(this, MainActivity.class));
-            default:
-                return super.onOptionsItemSelected(item);
+        if (item.getItemId() == R.id.openNews) {
+            startActivity(new Intent(this, MainActivity.class));
         }
+
+        return super.onOptionsItemSelected(item);
     }
 
     MessageListener messageListener = new MessageListener() {

@@ -13,6 +13,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
+import android.view.MenuItem;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -89,6 +90,15 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.openChat) {
+            startActivity(new Intent(this, ChatActivity.class));
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
     MessageListener messageListener = new MessageListener() {
         @Override
         public void onBroadcastMessageReceived(Message message) {
@@ -151,7 +161,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    public void onDestroy() {
+    protected void onDestroy() {
         super.onDestroy();
         Bridgefy.stop();
     }
